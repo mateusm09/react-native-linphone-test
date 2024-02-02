@@ -1,12 +1,14 @@
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
-    "react-native/scripts/react_native_pods.rb",
-    {paths: [process.argv[1]]},
-  )', __dir__]).strip
-
+      "react-native/scripts/react_native_pods.rb",
+      {paths: [process.argv[1]]},
+      )', __dir__]).strip
+      
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
+source "https://gitlab.linphone.org/BC/public/podspec.git"
+source "https://github.com/CocoaPods/Specs.git"
 
 # If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
 # because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
@@ -38,6 +40,8 @@ target 'linphoneTest' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+
+  pod 'linphone-sdk', '~> 5.3.0'
 
   target 'linphoneTestTests' do
     inherit! :complete
