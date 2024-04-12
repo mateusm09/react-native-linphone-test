@@ -1,4 +1,8 @@
-import {NativeEventEmitter, NativeModules} from 'react-native';
+import {
+  EmitterSubscription,
+  NativeEventEmitter,
+  NativeModules,
+} from 'react-native';
 const {LinphoneModule} = NativeModules;
 
 interface RegisterConfig {
@@ -8,7 +12,62 @@ interface RegisterConfig {
   transport?: 'Udp' | 'Tcp' | 'Tls';
 }
 
-export const callEvents = new NativeEventEmitter(LinphoneModule);
+type CallState =
+  | 'Idle'
+  | 'IncomingReceived'
+  | 'PushIncomingReceived'
+  | 'OutgoingInit'
+  | 'OutgoingProgress'
+  | 'OutgoingRinging'
+  | 'OutgoingEarlyMedia'
+  | 'Connected'
+  | 'StreamsRunning'
+  | 'Pausing'
+  | 'Paused'
+  | 'Resuming'
+  | 'Referred'
+  | 'Error'
+  | 'End'
+  | 'PausedByRemote'
+  | 'UpdatedByRemote'
+  | 'IncomingEarlyMedia'
+  | 'Updating'
+  | 'Released'
+  | 'EarlyUpdatedByRemote'
+  | 'EarlyUpdating';
+
+type CallEvent = {
+  state: CallState;
+  message: string;
+};
+
+class CallEvents extends NativeEventEmitter {
+  constructor() {
+    super(LinphoneModule);
+  }
+
+  addListener(
+    eventType: 'callstate',
+    listener: (event: CallEvent) => void,
+    context?: Object | undefined,
+  ): EmitterSubscription {
+    return super.addListener(eventType, listener, context);
+  }
+
+  emit(eventType: string, ...params: any[]): void {
+    return super.emit(eventType, ...params);
+  }
+
+  listenerCount(eventType: string): number {
+    return super.listenerCount(eventType);
+  }
+
+  removeAllListeners(eventType: string): void {
+    return super.removeAllListeners(eventType);
+  }
+}
+
+export const callEvents = new CallEvents();
 
 export function register(config: RegisterConfig): Promise<void> {
   return LinphoneModule.register(
@@ -29,4 +88,16 @@ export function deleteAccount(): Promise<void> {
 
 export function accept(): Promise<void> {
   return LinphoneModule.accept();
+}
+
+export function decline(): Promise<void> {
+  return LinphoneModule.decline();
+}
+
+export function call(address: string): Promise<void> {
+  return LinphoneModule.call(address);
+}
+
+export function terminate(): Promise<void> {
+  return LinphoneModule.terminate();
 }

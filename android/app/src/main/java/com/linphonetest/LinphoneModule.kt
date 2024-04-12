@@ -133,4 +133,22 @@ class LinphoneModule(reactContext: ReactApplicationContext): ReactContextBaseJav
     @ReactMethod fun decline() {
         core.currentCall?.decline(Reason.Declined)
     }
+
+    @ReactMethod fun call(address: String, promise: Promise) {
+        val callParams = core.createCallParams(null)
+        callParams ?: return promise.reject("Call-creation", "Call params creation failed")
+
+        callParams.mediaEncryption = MediaEncryption.SRTP
+
+        val remoteAddress = Factory.instance().createAddress(address)
+        remoteAddress ?: return promise.reject("Call-creation", "Address creation failed")
+
+        val call = core.inviteAddressWithParams(remoteAddress, callParams)
+
+        if (call == null) {
+            promise.reject("Call-creation", "Call invite failed")
+        } else {
+            promise.resolve("Call successful")
+        }
+    }
 }
