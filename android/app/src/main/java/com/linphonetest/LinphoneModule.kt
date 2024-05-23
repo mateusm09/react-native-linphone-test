@@ -1,5 +1,12 @@
 package com.linphonetest
+import android.net.Uri
+import android.os.Build
+import android.telecom.CallAttributes
+import android.util.JsonWriter
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.telecom.CallAttributesCompat
+import androidx.core.telecom.CallsManager
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.Promise
@@ -7,8 +14,13 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.facebook.react.bridge.WritableMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
 import org.linphone.core.*
 
@@ -32,6 +44,35 @@ class LinphoneModule(reactContext: ReactApplicationContext): ReactContextBaseJav
                 putString("message", message)
             }
             sendEvent(reactContext, "callstate", params)
+
+            when (state) {
+                Call.State.IncomingReceived -> {
+
+                }
+
+                Call.State.Idle -> TODO()
+                Call.State.PushIncomingReceived -> TODO()
+                Call.State.OutgoingInit -> TODO()
+                Call.State.OutgoingProgress -> TODO()
+                Call.State.OutgoingRinging -> TODO()
+                Call.State.OutgoingEarlyMedia -> TODO()
+                Call.State.Connected -> TODO()
+                Call.State.StreamsRunning -> TODO()
+                Call.State.Pausing -> TODO()
+                Call.State.Paused -> TODO()
+                Call.State.Resuming -> TODO()
+                Call.State.Referred -> TODO()
+                Call.State.Error -> TODO()
+                Call.State.End -> TODO()
+                Call.State.PausedByRemote -> TODO()
+                Call.State.UpdatedByRemote -> TODO()
+                Call.State.IncomingEarlyMedia -> TODO()
+                Call.State.Updating -> TODO()
+                Call.State.Released -> TODO()
+                Call.State.EarlyUpdatedByRemote -> TODO()
+                Call.State.EarlyUpdating -> TODO()
+                null -> TODO()
+            }
         }
     }
 
@@ -136,19 +177,62 @@ class LinphoneModule(reactContext: ReactApplicationContext): ReactContextBaseJav
 
     @ReactMethod fun call(address: String, promise: Promise) {
         val callParams = core.createCallParams(null)
-        callParams ?: return promise.reject("Call-creation", "Call params creation failed")
+        callParams ?: return promise.reject("call-creation", "Call params creation failed")
 
         callParams.mediaEncryption = MediaEncryption.SRTP
 
         val remoteAddress = Factory.instance().createAddress(address)
-        remoteAddress ?: return promise.reject("Call-creation", "Address creation failed")
+        remoteAddress ?: return promise.reject("call-creation", "Address creation failed")
 
         val call = core.inviteAddressWithParams(remoteAddress, callParams)
 
         if (call == null) {
-            promise.reject("Call-creation", "Call invite failed")
+            promise.reject("call-creation", "Call invite failed")
         } else {
             promise.resolve("Call successful")
         }
     }
+
+    /**
+     * Resolve um objeto com os dispositivos de áudio disponíveis e o id do dispositivo selecionado atualmente
+     * */
+    @ReactMethod fun getAudioDevices(promise: Promise){
+        val values = Arguments.createArray()
+
+        for (device in core.audioDevices) {
+            val mappedDevice = Arguments.createMap()
+            mappedDevice.putString("name", device.deviceName)
+            mappedDevice.putString("driverName", device.driverName)
+            mappedDevice.putString("id", device.id)
+            mappedDevice.putString("type", device.type.toString())
+            mappedDevice.putString("capabilities", device.capabilities.toString())
+            values.pushMap(mappedDevice)
+        }
+
+        val returnedMap = Arguments.createMap()
+        returnedMap.putArray("devices", values)
+        returnedMap.putString("current", core.currentCall?.outputAudioDevice?.id)
+
+        promise.resolve(returnedMap)
+    }
+
+    @ReactMethod fun setAudioDevice(id: String, promise: Promise) {
+        if (core.currentCall == null) {
+            promise.reject("no-call", "No current call")
+            return
+        }
+
+        val newDevice = core.audioDevices.find{ it.id == id }
+        if (newDevice == null) {
+            promise.reject("no-device", "No device with $id found")
+            return
+        }
+        if (newDevice.id == core.currentCall?.outputAudioDevice?.id) {
+            return
+        }
+
+        core.currentCall!!.outputAudioDevice = core.audioDevices.find { it.id == id }
+        promise.resolve("Set audio device successfully")
+    }
 }
+

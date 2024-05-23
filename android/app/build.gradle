@@ -123,6 +123,7 @@ dependencies {
 
     implementation 'org.linphone:linphone-sdk-android:5.3.13'
     implementation 'androidx.media:media:1.7.0'
+    implementation 'androidx.core:core-telecom:1.0.0-alpha02'
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

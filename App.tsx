@@ -18,10 +18,10 @@ import {
   call,
   callEvents,
   decline,
+  getAudioDevices,
   register,
   terminate,
 } from './linphone';
-import RNCallKeep from 'react-native-callkeep';
 
 function App(): React.JSX.Element {
   const [calling, setCalling] = React.useState(false);
@@ -43,40 +43,13 @@ function App(): React.JSX.Element {
     }
   }
 
-  function initCallkeep() {
-    RNCallKeep.setup({
-      android: {
-        alertTitle: 'Permissions required',
-        alertDescription:
-          'This application needs to access your phone accounts',
-        cancelButton: 'Cancel',
-        okButton: 'ok',
-        additionalPermissions: [],
-      },
-      ios: {
-        appName: 'LinhponeTest',
-      },
-    });
-
-    RNCallKeep.setAvailable(true);
-
-    RNCallKeep.addEventListener('answerCall', accept);
-    RNCallKeep.addEventListener('endCall', terminate);
-    RNCallKeep.addEventListener('didDisplayIncomingCall', event => {
-      console.log(event);
-    });
-    RNCallKeep.addEventListener('createIncomingConnectionFailed', event => {
-      console.log(event);
-    });
-  }
-
   useEffect(() => {
     PermissionsAndroid.requestMultiple([
       'android.permission.RECORD_AUDIO',
       'android.permission.USE_SIP',
     ]);
 
-    initLinphone().then(initCallkeep);
+    initLinphone();
   }, []);
 
   useEffect(() => {
@@ -84,20 +57,13 @@ function App(): React.JSX.Element {
 
     if (registered) {
       console.log('sub to events');
+      getAudioDevices().then(console.log);
 
       sub = callEvents.addListener('callstate', event => {
         console.log('[JS] event', event);
 
         if (event?.state === 'IncomingReceived') {
           setCalling(true);
-
-          RNCallKeep.displayIncomingCall(
-            '123',
-            'mateus',
-            'mateus',
-            'generic',
-            false,
-          );
         } else if (event?.state === 'End') {
           setCalling(false);
           setActive(false);

@@ -41,6 +41,26 @@ type CallEvent = {
   message: string;
 };
 
+type AudioDevice = {
+  id: string;
+  name: string;
+  driverName: string;
+  capabilities: 'CapabilityRecord' | 'CapabilityPlay' | 'CapabilityAll';
+  type:
+    | 'Unknown'
+    | 'Microphone'
+    | 'Earpiece'
+    | 'Speaker'
+    | 'Bluetooth'
+    | 'BluetoothA2DP'
+    | 'Telephony'
+    | 'AuxLine'
+    | 'GenericUsb'
+    | 'Headset'
+    | 'Headphones'
+    | 'HearingAid';
+};
+
 class CallEvents extends NativeEventEmitter {
   constructor() {
     super(LinphoneModule);
@@ -100,4 +120,11 @@ export function call(address: string): Promise<void> {
 
 export function terminate(): Promise<void> {
   return LinphoneModule.terminate();
+}
+
+export function getAudioDevices(): Promise<{
+  devices: AudioDevice[];
+  current: string;
+}> {
+  return LinphoneModule.getAudioDevices();
 }
