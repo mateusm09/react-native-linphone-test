@@ -90,7 +90,7 @@ class CallEvents extends NativeEventEmitter {
 export const callEvents = new CallEvents();
 
 export function register(config: RegisterConfig): Promise<void> {
-  return LinphoneModule.register(
+  return LinphoneModule.register1(
     config.username,
     config.password,
     config.domain,

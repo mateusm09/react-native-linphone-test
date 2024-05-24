@@ -10,90 +10,93 @@ import {
   Button,
   EventSubscription,
   PermissionsAndroid,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native';
-import {
-  accept,
-  call,
-  callEvents,
-  decline,
-  getAudioDevices,
-  register,
-  terminate,
-} from './linphone';
+// import {
+//   accept,
+//   call,
+//   callEvents,
+//   decline,
+//   getAudioDevices,
+//   register,
+//   terminate,
+// } from './linphone';
 
 function App(): React.JSX.Element {
   const [calling, setCalling] = React.useState(false);
   const [registered, setRegistered] = React.useState(false);
   const [active, setActive] = React.useState(false);
 
-  async function initLinphone() {
-    try {
-      await register({
-        username: 'mateus',
-        password: 'password',
-        domain: 'testes.mindtech.com.br',
-      });
+  // async function initLinphone() {
+  //   try {
+  //     await register({
+  //       username: 'jau',
+  //       password: 'jau',
+  //       domain: 'sip.dev.ppacontatto.com.br',
+  //     });
 
-      console.log('register');
-      setRegistered(true);
-    } catch (error) {
-      console.error('REGISTRATION ERROR', error);
-    }
-  }
+  //     console.log('register');
+  //     setRegistered(true);
+  //   } catch (error) {
+  //     console.error('REGISTRATION ERROR', error);
+  //   }
+  // }
 
-  useEffect(() => {
-    PermissionsAndroid.requestMultiple([
-      'android.permission.RECORD_AUDIO',
-      'android.permission.USE_SIP',
-    ]);
+  // useEffect(() => {
+  //   if (Platform.OS === 'android') {
+  //     PermissionsAndroid.requestMultiple([
+  //       'android.permission.RECORD_AUDIO',
+  //       'android.permission.USE_SIP',
+  //     ]);
+  //   }
 
-    initLinphone();
-  }, []);
+  //   initLinphone();
+  // }, []);
 
-  useEffect(() => {
-    let sub: EventSubscription;
+  // useEffect(() => {
+  //   let sub: EventSubscription;
 
-    if (registered) {
-      console.log('sub to events');
-      getAudioDevices().then(console.log);
+  //   if (registered) {
+  //     console.log('sub to events');
+  //     // getAudioDevices().then(console.log);
 
-      sub = callEvents.addListener('callstate', event => {
-        console.log('[JS] event', event);
+  //     sub = callEvents.addListener('callstate', event => {
+  //       console.log('[JS] event', event);
 
-        if (event?.state === 'IncomingReceived') {
-          setCalling(true);
-        } else if (event?.state === 'End') {
-          setCalling(false);
-          setActive(false);
-        } else if (event?.state === 'Connected') {
-          setActive(true);
-        }
-      });
-    }
+  //       if (event?.state === 'IncomingReceived') {
+  //         setCalling(true);
+  //       } else if (event?.state === 'End') {
+  //         setCalling(false);
+  //         setActive(false);
+  //       } else if (event?.state === 'Connected') {
+  //         setActive(true);
+  //       }
+  //     });
+  //   }
 
-    return () => {
-      sub?.remove();
-    };
-  }, [registered]);
+  //   return () => {
+  //     sub?.remove();
+  //   };
+  // }, [registered]);
 
-  if (calling) {
-    return (
-      <View>
-        <Button title="Accept" onPress={() => accept()} />
-        <Button title="Decline" onPress={() => decline()} />
-      </View>
-    );
-  }
+  // if (calling) {
+  //   return (
+  //     <View>
+  //       <Button title="Accept" onPress={() => accept()} />
+  //       <Button title="Decline" onPress={() => decline()} />
+  //     </View>
+  //   );
+  // }
 
-  if (active) {
-    return (
-      <View>
-        <Button title="Hangup" onPress={() => terminate()} />
-      </View>
-    );
-  }
+  // if (active) {
+  //   return (
+  //     <View>
+  //       <Button title="Hangup" onPress={() => terminate()} />
+  //     </View>
+  //   );
+  // }
 
   return (
     <View>

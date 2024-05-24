@@ -6,9 +6,9 @@ require Pod::Executable.execute_command('node', ['-p',
       )', __dir__]).strip
       
 platform :ios, min_ios_version_supported
-prepare_react_native_project!
 source "https://gitlab.linphone.org/BC/public/podspec.git"
 source "https://github.com/CocoaPods/Specs.git"
+prepare_react_native_project!
 
 # If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
 # because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
@@ -19,7 +19,7 @@ source "https://github.com/CocoaPods/Specs.git"
 #   dependencies: {
 #     ...(process.env.NO_FLIPPER ? { 'react-native-flipper': { platforms: { ios: null } } } : {}),
 # ```
-flipper_config = ENV['NO_FLIPPER'] == "1" ? FlipperConfiguration.disabled : FlipperConfiguration.enabled
+flipper_config = FlipperConfiguration.disabled
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
@@ -29,6 +29,7 @@ end
 
 target 'linphoneTest' do
   config = use_native_modules!
+#   use_frameworks!
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -40,8 +41,8 @@ target 'linphoneTest' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
-
-  pod 'linphone-sdk', '~> 5.3.0'
+ 
+  pod 'linphone-sdk-novideo', '5.3.9'
 
   target 'linphoneTestTests' do
     inherit! :complete
@@ -56,4 +57,24 @@ target 'linphoneTest' do
       :mac_catalyst_enabled => false
     )
   end
+
+end
+
+# É necessário manter o linphone como um framework dinâmico, para que ele seja compilado corretamente
+# Porém o React native não suporta ser um framework dinâmico
+# então essa função faz com que o use_frameworks! seja sobrescrito para os móduls que não estão na lista abaixo
+dynamic_frameworks = ['linphone-sdk-novideo'] # <- swift libraries names
+# Make all the other frameworks into static frameworks by overriding the static_framework? function to return true
+pre_install do |installer|
+    installer.pod_targets.each do |pod|
+        if !dynamic_frameworks.include?(pod.name)
+            puts "Overriding the static_framework? method for #{pod.name}"
+            def pod.static_framework?;
+            true
+            end
+            def pod.build_type;
+                Pod::BuildType.static_library
+            end
+        end
+    end
 end
