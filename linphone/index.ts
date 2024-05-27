@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {
   EmitterSubscription,
   NativeEventEmitter,
@@ -90,7 +91,7 @@ class CallEvents extends NativeEventEmitter {
 export const callEvents = new CallEvents();
 
 export function register(config: RegisterConfig): Promise<void> {
-  return LinphoneModule.register1(
+  return LinphoneModule.register(
     config.username,
     config.password,
     config.domain,
@@ -115,6 +116,7 @@ export function decline(): Promise<void> {
 }
 
 export function call(address: string): Promise<void> {
+  console.log('calling');
   return LinphoneModule.call(address);
 }
 
@@ -127,4 +129,36 @@ export function getAudioDevices(): Promise<{
   current: string;
 }> {
   return LinphoneModule.getAudioDevices();
+}
+
+export function setAudioDevice(deviceId: string): Promise<void> {
+  return LinphoneModule.setAudioDevice(deviceId);
+}
+
+export function useOutputAudioDevices() {
+  const [devices, setDevices] = useState<AudioDevice[]>([]);
+  const [current, setCurrent] = useState<string>('');
+
+  useEffect(() => {
+    const sub = callEvents.addListener('callstate', data => {
+      switch (data.state) {
+        case 'StreamsRunning':
+        case 'Connected':
+        case 'IncomingReceived':
+        case 'OutgoingInit':
+        case 'Idle':
+          getAudioDevices().then(result => {
+            setDevices(result.devices.filter(d => d.type !== 'Microphone'));
+            setCurrent(result.current);
+          });
+          break;
+        default:
+          console.log('state', data.state);
+      }
+
+      return sub.remove;
+    });
+  }, []);
+
+  return {devices, current};
 }

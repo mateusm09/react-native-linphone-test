@@ -9,102 +9,117 @@ import React, {useEffect} from 'react';
 import {
   Button,
   EventSubscription,
+  FlatList,
   PermissionsAndroid,
   Platform,
+  SafeAreaView,
   StyleSheet,
   View,
 } from 'react-native';
-// import {
-//   accept,
-//   call,
-//   callEvents,
-//   decline,
-//   getAudioDevices,
-//   register,
-//   terminate,
-// } from './linphone';
+import {
+  accept,
+  call,
+  callEvents,
+  decline,
+  getAudioDevices,
+  register,
+  setAudioDevice,
+  terminate,
+  useOutputAudioDevices,
+} from './linphone';
 
 function App(): React.JSX.Element {
   const [calling, setCalling] = React.useState(false);
   const [registered, setRegistered] = React.useState(false);
   const [active, setActive] = React.useState(false);
 
-  // async function initLinphone() {
-  //   try {
-  //     await register({
-  //       username: 'jau',
-  //       password: 'jau',
-  //       domain: 'sip.dev.ppacontatto.com.br',
-  //     });
+  const {devices, current} = useOutputAudioDevices();
 
-  //     console.log('register');
-  //     setRegistered(true);
-  //   } catch (error) {
-  //     console.error('REGISTRATION ERROR', error);
-  //   }
-  // }
+  async function initLinphone() {
+    try {
+      await register({
+        username: 'mateus',
+        password: 'password',
+        domain: '192.168.4.3',
+      });
 
-  // useEffect(() => {
-  //   if (Platform.OS === 'android') {
-  //     PermissionsAndroid.requestMultiple([
-  //       'android.permission.RECORD_AUDIO',
-  //       'android.permission.USE_SIP',
-  //     ]);
-  //   }
+      console.log('register');
+      setRegistered(true);
+    } catch (error) {
+      console.error('REGISTRATION ERROR', error);
+    }
+  }
 
-  //   initLinphone();
-  // }, []);
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      PermissionsAndroid.requestMultiple([
+        'android.permission.RECORD_AUDIO',
+        'android.permission.USE_SIP',
+      ]);
+    }
 
-  // useEffect(() => {
-  //   let sub: EventSubscription;
+    initLinphone();
+  }, []);
 
-  //   if (registered) {
-  //     console.log('sub to events');
-  //     // getAudioDevices().then(console.log);
+  useEffect(() => {
+    let sub: EventSubscription;
 
-  //     sub = callEvents.addListener('callstate', event => {
-  //       console.log('[JS] event', event);
+    if (registered) {
+      console.log('sub to events');
+      // getAudioDevices().then(console.log);
 
-  //       if (event?.state === 'IncomingReceived') {
-  //         setCalling(true);
-  //       } else if (event?.state === 'End') {
-  //         setCalling(false);
-  //         setActive(false);
-  //       } else if (event?.state === 'Connected') {
-  //         setActive(true);
-  //       }
-  //     });
-  //   }
+      sub = callEvents.addListener('callstate', event => {
+        console.log('[JS] event', event);
 
-  //   return () => {
-  //     sub?.remove();
-  //   };
-  // }, [registered]);
+        if (event?.state === 'IncomingReceived') {
+          setCalling(true);
+        } else if (event?.state === 'End') {
+          setCalling(false);
+          setActive(false);
+        } else if (event?.state === 'Connected') {
+          setActive(true);
+        }
+      });
+    }
 
-  // if (calling) {
-  //   return (
-  //     <View>
-  //       <Button title="Accept" onPress={() => accept()} />
-  //       <Button title="Decline" onPress={() => decline()} />
-  //     </View>
-  //   );
-  // }
+    return () => {
+      sub?.remove();
+    };
+  }, [registered]);
 
-  // if (active) {
-  //   return (
-  //     <View>
-  //       <Button title="Hangup" onPress={() => terminate()} />
-  //     </View>
-  //   );
-  // }
+  if (calling) {
+    return (
+      <SafeAreaView>
+        <Button title="Accept" onPress={() => accept()} />
+        <Button title="Decline" onPress={() => decline()} />
+      </SafeAreaView>
+    );
+  }
+
+  if (active) {
+    return (
+      <SafeAreaView>
+        <Button title="Hangup" onPress={() => terminate()} />
+        <FlatList
+          data={devices}
+          renderItem={({item, index}) => (
+            <Button
+              title={item.name}
+              key={index}
+              onPress={() => setAudioDevice(item.id)}
+            />
+          )}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View>
-      <Button
-        title="Call"
-        onPress={() => call('sip:mateus2@testes.mindtech.com.br')}
-      />
-    </View>
+    <SafeAreaView>
+      <View>
+        <Button title="Call" onPress={() => call('sip:teste@192.168.4.3')} />
+      </View>
+    </SafeAreaView>
   );
 }
 

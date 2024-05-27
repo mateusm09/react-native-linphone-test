@@ -62,7 +62,8 @@ class LinphoneModule: RCTEventEmitter {
    * End of React Native Event Emitter
    */
   
-  @objc public func register1(_ _username: String, password _password: String,domain _domain: String,transport _transport: String, resolver _resolver: @escaping RCTPromiseResolveBlock, rejecter _rejecter: @escaping RCTPromiseRejectBlock) {
+  @objc
+  public func register(_ _username: String, password _password: String,domain _domain: String,transport _transport: String, resolver _resolver: @escaping RCTPromiseResolveBlock, rejecter _rejecter: @escaping RCTPromiseRejectBlock) {
     
     let registrationDelegate = AccountDelegateStub(onRegistrationStateChanged: {
       (account: Account, state: RegistrationState, message: String) in
@@ -142,7 +143,10 @@ class LinphoneModule: RCTEventEmitter {
     try? core.currentCall?.decline(reason: Reason.Declined)
   }
   
-  @objc public func call(_ address: String, resolve resolver: RCTPromiseResolveBlock, reject rejecter: RCTPromiseRejectBlock) {
+  @objc(call: resolve: reject:)
+  public func call(_ address: String, resolve resolver: RCTPromiseResolveBlock, reject rejecter: RCTPromiseRejectBlock) {
+    logger.info("Calling \(address)")
+    
     do {
       let remoteAddress = try Factory.Instance.createAddress(addr: address)
       let callParams = try core.createCallParams(call: nil)
@@ -152,29 +156,42 @@ class LinphoneModule: RCTEventEmitter {
       
       resolver(true)
     } catch {
+      logger.error("Error Calling: \(error.localizedDescription)")
       rejecter("call-creation", error.localizedDescription, error)
     }
   }
   
   @objc public func getAudioDevices(_ resolver: RCTPromiseResolveBlock, reject rejecter: RCTPromiseRejectBlock) {
-    let values = NSMutableSet()
+    var values: [[String:String]] = []
     
     for device in core.audioDevices {
-      let mappedDevice = NSMutableDictionary()
       
-      mappedDevice.setValue(device.deviceName, forKey: "name")
-      mappedDevice.setValue(device.driverName, forKey: "driverName")
-      mappedDevice.setValue(device.id, forKey: "id")
-      mappedDevice.setValue(String(describing: device.type), forKey: "type")
-      mappedDevice.setValue(String(describing: device.capabilities), forKey: "capabilities")
+      let capabilities = {
+        switch (device.capabilities) {
+        case .CapabilityPlay:
+          return "CapabilityPlay"
+        case .CapabilityRecord:
+          return "CapabilityRecord"
+        default:
+          return "CapabilityAll"
+        }
+      }()
       
-      values.add(mappedDevice)
+      let mappedDevice: [String:String] = [
+        "name": device.deviceName,
+        "driverName": device.driverName,
+        "id": device.id,
+        "type": String(describing: device.type),
+        "capabilities": capabilities
+      ]
+      
+      values.append(mappedDevice)
     }
     
-    let returned = NSMutableDictionary()
-    returned.setValue(values, forKey: "devices")
-    returned.setValue(core.currentCall?.outputAudioDevice?.id, forKey: "current")
-    
+    let returned: [String: Any] = [
+      "devices": values,
+      "current": core.currentCall?.outputAudioDevice?.id ?? ""
+    ]
     resolver(returned)
   }
   
